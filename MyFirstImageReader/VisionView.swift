@@ -64,7 +64,7 @@ class VisionView: NSView, NSServicesMenuRequestor {
         imageLayer.frame = layer.bounds
         layer.addSublayer(imageLayer)
         
-        annotationLayer.bounds = layer.frame
+        annotationLayer.bounds = layer.bounds
         annotationLayer.opacity = 0.0
         layer.insertSublayer(annotationLayer, above: imageLayer)
     }
