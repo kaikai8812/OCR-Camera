@@ -2,18 +2,17 @@
 See LICENSE folder for this sample’s licensing information.
 
 Abstract:
-The view handling all the Vision Text Recognition aspects.
+A custom view that renders the OCR results. It supports drag and drop and Continuity Camera.
 */
 
 import Cocoa
 import Vision
 
-// Conform to VisionViewDelegate to be informed of image changes in a VisionView.
+// A delegate protocol to communicates changes to the VisionView.
 protocol VisionViewDelegate: AnyObject {
     func imageDidChange(toImage image: NSImage?)
 }
 
-// Custom view that renders OCR results, supports drag'n drop and Continuity Camera
 class VisionView: NSView, NSServicesMenuRequestor {
     
     weak var delegate: (AppDelegate & VisionViewDelegate)?
@@ -23,9 +22,9 @@ class VisionView: NSView, NSServicesMenuRequestor {
             CATransaction.begin()
             CATransaction.setAnimationDuration(0.0)
             
-            // Update view contents.
+            // Update the view contents.
             imageLayer.contents = self.image
-            if let newImage = self.image {
+            if let newImage = image {
                 let newSize = newImage.size
                 updateContentSize(w: CGFloat(newSize.width), h: CGFloat(newSize.height))
             } else {
@@ -39,10 +38,11 @@ class VisionView: NSView, NSServicesMenuRequestor {
             }
         }
     }
+    
     var imageLayer: CALayer = CALayer()
     var annotationLayer: AnnotationLayer = AnnotationLayer()
     
-    // MARK: Init
+    // MARK: Initialization
     func commonInit() {
         registerForDraggedTypes([NSPasteboard.PasteboardType.URL])
         wantsLayer = true
@@ -58,7 +58,7 @@ class VisionView: NSView, NSServicesMenuRequestor {
         commonInit()
     }
     
-    // MARK: Layer hierarchy
+    // MARK: Layer Hierarchy
     func setupLayers() {
         guard let layer = self.layer else { return }
         imageLayer.frame = layer.bounds
@@ -72,16 +72,16 @@ class VisionView: NSView, NSServicesMenuRequestor {
     func updateContentSize(w width: CGFloat, h height: CGFloat) {
         let newFrame = CGRect(x: 0, y: 0, width: width, height: height)
         
-        // Update image layer.
+        // Update the image layer.
         imageLayer.frame = newFrame
         setFrameSize(NSSize(width: width, height: height))
         
-        // Update annotation layer.
+        // Update the annotation layer.
         annotationLayer.frame = newFrame
         annotationLayer.setNeedsDisplay()
     }
     
-    // MARK: Continuity camera support
+    // MARK: Continuity Camera Support
     override func validRequestor(forSendType sendType: NSPasteboard.PasteboardType?, returnType: NSPasteboard.PasteboardType?) -> Any? {
         if let pasteboardType = returnType, NSImage.imageTypes.contains(pasteboardType.rawValue) {
             return self
@@ -112,9 +112,9 @@ class VisionView: NSView, NSServicesMenuRequestor {
         super.mouseDown(with: event)
     }
     
-    // MARK: NSDraggingDestination
+    // MARK: NSDraggingDestination Protocol
     override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
-        return NSDragOperation.copy
+        return .copy
     }
     
     override func draggingExited(_ sender: NSDraggingInfo?) {

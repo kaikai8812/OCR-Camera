@@ -1,7 +1,9 @@
-# Locating and Displaying Recognized Text on a Document
+# Locating and Displaying Recognized Text
 
-Overlay text recognition output from the document scanner onto an image, reporting progress throughout.
+Configure and perform text recognition on images to identify their textual content.
 
 ## Overview
 
-- Note: For more information about this sample code project, see [WWDC 2019 Session 234: Text Recognition in Vision Framework](https://developer.apple.com/videos/play/wwdc19/234/).
+- Note: This sample code project is associated with WWDC21 session [10041: Extract Document Data Using Vision][1].
+
+[1]:	https://developer.apple.com/wwdc21/10041/ "A link to session 10041: Extract Document Data Using Vision."

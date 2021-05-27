@@ -2,7 +2,7 @@
 See LICENSE folder for this sample’s licensing information.
 
 Abstract:
-App delegate.
+The app's delegate object.
 */
 
 import Cocoa
@@ -17,78 +17,130 @@ class AppDelegate: NSObject, NSApplicationDelegate, VisionViewDelegate, NSSearch
     @IBOutlet weak var customWordsField: NSTextField!
     @IBOutlet weak var searchField: NSSearchField!
     @IBOutlet weak var progressView: ProgressView!
+    @IBOutlet weak var revisionsPopUpButton: NSPopUpButton!
+    @IBOutlet weak var languagePopUpButton: NSPopUpButton!
     
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApplication.shared.servicesProvider = self
     }
     
-    // MARK: Results filtering / highlighting
+    // MARK: Result Filtering and Highlighting
     @IBAction func highlightResults(_ sender: NSMenuItem) {
-        // Flip menu item state
-        if sender.state == NSControl.StateValue.on {
-            sender.state = NSControl.StateValue.off
+        // Toggle the menu state.
+        if sender.state == .on {
+            sender.state = .off
         } else {
-            sender.state = NSControl.StateValue.on
+            sender.state = .on
         }
-        imageView.annotationLayer.isHidden = (sender.state == NSControl.StateValue.off)
+        imageView.annotationLayer.isHidden = (sender.state == .off)
     }
     
     func controlTextDidChange(_ obj: Notification) {
         // Update the image view.
-        imageView.annotationLayer.textFilter = searchField!.stringValue
+        imageView.annotationLayer.textFilter = searchField.stringValue
         
         // Update the transcript.
-        let stringRange = transcriptView.string.range(of: searchField!.stringValue)
+        let stringRange = transcriptView.string.range(of: searchField.stringValue)
         if let range = stringRange {
             transcriptView.showFindIndicator(for: NSRange(range, in: transcriptView.string))
         }
     }
     
-    // MARK: Request cancellation
+    func updateAvailableLanguages() {
+        do {
+            let supportedLanguages: [String] = try textRecognitionRequest.supportedRecognitionLanguages()
+            languagePopUpButton.removeAllItems()
+            
+            var index = 0
+            for currentLanguage in supportedLanguages {
+                languagePopUpButton.addItem(withTitle: currentLanguage)
+                languagePopUpButton.lastItem?.tag = index
+                    
+                index += 1
+            }
+        } catch {
+            print("Unexpected error: \(error).")
+        }
+        
+        languagePopUpButton.selectItem(withTitle: primaryLanguage)
+    }
+    
+    // MARK: Request Cancelation
     @IBAction func cancelCurrentRequest(_ sender: NSButton) {
         textRecognitionRequest.cancel()
         progressView.isRunning = false
     }
     
-    // MARK: Text recognition request options
-    var recognitionLevel: VNRequestTextRecognitionLevel = VNRequestTextRecognitionLevel.accurate {
-        didSet { performOCRRequest() }
+    // MARK: Text Recognition Request Pptions
+    var recognitionLevel: VNRequestTextRecognitionLevel = .accurate {
+        didSet {
+            performOCRRequest()
+        }
     }
+    
     @IBAction func changeRecognitionLevel(_ sender: NSPopUpButton) {
         guard let selectedItem = sender.selectedItem else {
             return
         }
         switch selectedItem.identifier!.rawValue {
         case "fast":
-            recognitionLevel = VNRequestTextRecognitionLevel.fast
+            recognitionLevel = .fast
         default:
-            recognitionLevel = VNRequestTextRecognitionLevel.accurate
+            recognitionLevel = .accurate
         }
+    }
+    
+    var requestRevision: UInt = 0 {
+        didSet {
+            performOCRRequest()
+        }
+    }
+    @IBAction func changeRevision(_ sender: NSPopUpButton) {
+        guard let selectedItem = sender.selectedItem else {
+            return
+        }
+        requestRevision = UInt(selectedItem.tag)
+    }
+    
+    var primaryLanguage: String = "en-US" {
+        didSet {
+            performOCRRequest()
+        }
+    }
+    
+    @IBAction func changePrimaryLanguage(_ sender: NSPopUpButton) {
+        guard let selectedItem = sender.selectedItem else {
+            return
+        }
+        primaryLanguage = selectedItem.title
     }
     
     var useCPUOnly: Bool = false {
         didSet { performOCRRequest() }
     }
+    
     @IBAction func changeUseCPUOnly(_ sender: NSMenuItem) {
-        // Flip menu item state.
-        if sender.state == NSControl.StateValue.on {
-            sender.state = NSControl.StateValue.off
+        // Toggle the menu item state.
+        if sender.state == .on {
+            sender.state = .off
         } else {
-            sender.state = NSControl.StateValue.on
+            sender.state = .on
         }
-        useCPUOnly = (sender.state == NSControl.StateValue.on)
+        useCPUOnly = (sender.state == .on)
     }
     
     var useLanguageModel: Bool = true {
         didSet { performOCRRequest() }
     }
+    
     @IBAction func changeUseLanguageModel(_ sender: NSButton) {
-        useLanguageModel = (sender.state == NSControl.StateValue.on)
+        useLanguageModel = (sender.state == .on)
     }
     
     var minTextHeight: Float = 0 {
         didSet { performOCRRequest() }
     }
+    
     @IBAction func changeMinTextHeight(_ sender: NSTextField) {
         minTextHeight = sender.floatValue
     }
@@ -99,13 +151,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, VisionViewDelegate, NSSearch
             performOCRRequest()
         }
     }
+    
     @IBAction func changeUseCustomWords(_ sender: NSButton) {
-        useCustomWords = (sender.state == NSControl.StateValue.on)
+        useCustomWords = (sender.state == .on)
     }
     
     var customWords: [String] = [] {
         didSet { performOCRRequest() }
     }
+    
     @IBAction func changeCustomWords(_ sender: NSTextField) {
         let customWordsString = sender.stringValue
         let substrings = customWordsString.split(separator: " ")
@@ -123,50 +177,72 @@ class AppDelegate: NSObject, NSApplicationDelegate, VisionViewDelegate, NSSearch
     override func awakeFromNib() {
         super.awakeFromNib()
         
-        // Set up UI.
+        // Set up the user interface.
         progressView.isRunning = false
         imageView.delegate = self
         imageView.setupLayers()
         window.makeFirstResponder(imageView)
         
-        // Set up the request.
+        // Create the request.
         textRecognitionRequest = VNRecognizeTextRequest(completionHandler: recognizeTextHandler)
+        
+        // Set the request revision.
+        requestRevision = UInt(textRecognitionRequest.revision)
+        
+        // Check for available revisions.
+        let revisions = VNRecognizeTextRequest.supportedRevisions
+        
+        // Get the Revision UI prefix from the menu item.
+        let revisionPrefix = revisionsPopUpButton.itemTitle(at: 0)
+        revisionsPopUpButton.removeItem(at: 0)
+        
+        for currentRevision in revisions {
+            let currentRevisionTitle = "\(revisionPrefix) \(currentRevision)"
+            revisionsPopUpButton.addItem(withTitle: currentRevisionTitle)
+            revisionsPopUpButton.lastItem?.tag = currentRevision
+        }
+        
+        // Select the current revision.
+        revisionsPopUpButton.selectItem(withTag: Int(requestRevision))
+        
+        // Get the default language.
+        primaryLanguage = textRecognitionRequest.recognitionLanguages.first!
     }
     
     func imageDidChange(toImage image: NSImage?) {
         guard let newImage = image else { return }
 
         if let cgImage = newImage.cgImage(forProposedRect: nil, context: nil, hints: nil) {
-            // Set up the request handler.
-            requestHandler = VNImageRequestHandler(cgImage: cgImage, options: [:])
+            // Create the request handler.
+            requestHandler = VNImageRequestHandler(cgImage: cgImage)
             
             // Perform the request.
             performOCRRequest()
         } else {
-            // Clean up Vision objects
+            // Clean up the Vision objects.
             textRecognitionRequest.cancel()
             requestHandler = nil
             
-            // Clean up UI.
+            // Reset the user interface state.
             imageView.annotationLayer.results = []
             progressView.isRunning = false
         }
     }
     
     func updateRequestParameters() {
-        // Update recognition level.
+        // Update the recognition level.
         switch recognitionLevel {
-        case VNRequestTextRecognitionLevel.fast:
-            textRecognitionRequest.recognitionLevel = VNRequestTextRecognitionLevel.fast
+        case .fast:
+            textRecognitionRequest.recognitionLevel = .fast
         default:
-            textRecognitionRequest.recognitionLevel = VNRequestTextRecognitionLevel.accurate
+            textRecognitionRequest.recognitionLevel = .accurate
         }
         
-        // Update minimum text height.
-        textRecognitionRequest.minimumTextHeight = self.minTextHeight
+        // Update the minimum text height.
+        textRecognitionRequest.minimumTextHeight = minTextHeight
         
-        // Update language-based correction.
-        textRecognitionRequest.usesLanguageCorrection = self.useLanguageModel
+        // Update the language-based correction.
+        textRecognitionRequest.usesLanguageCorrection = useLanguageModel
         
         // Update custom words, if any.
         if useCustomWords {
@@ -175,8 +251,17 @@ class AppDelegate: NSObject, NSApplicationDelegate, VisionViewDelegate, NSSearch
             textRecognitionRequest.customWords = []
         }
         
-        // Update CPU-only flag.
-        textRecognitionRequest.usesCPUOnly = self.useCPUOnly
+        // Update the CPU-only flag.
+        textRecognitionRequest.usesCPUOnly = useCPUOnly
+        
+        // Set the request revision.
+        textRecognitionRequest.revision = Int(requestRevision)
+        
+        // Set the primary language.
+        textRecognitionRequest.recognitionLanguages = [primaryLanguage]
+        
+        // Update the the app's supported languages.
+        updateAvailableLanguages()
     }
     
     func performOCRRequest() {
@@ -184,11 +269,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, VisionViewDelegate, NSSearch
         textRecognitionRequest.cancel()
         imageView.annotationLayer.results = []
         
+        updateRequestParameters()
+
         if imageView.image != nil {
-            updateRequestParameters()
             progressView.isRunning = true
             
-            DispatchQueue.global(qos: DispatchQoS.QoSClass.userInteractive).async { [unowned self] in
+            DispatchQueue.global(qos: .userInteractive).async { [unowned self] in
                 do {
                     try self.requestHandler?.perform([self.textRecognitionRequest])
                 } catch _ {}
@@ -198,12 +284,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, VisionViewDelegate, NSSearch
     
     func recognizeTextHandler(request: VNRequest, error: Error?) {
         DispatchQueue.main.async { [unowned self] in
-            self.results = self.textRecognitionRequest.results as? [VNRecognizedTextObservation]
+            self.results = self.textRecognitionRequest.results
             
-            // Update progress view.
+            // Update the progress view.
             self.progressView.isRunning = false
             
-            // Update results display in the image view.
+            // Update the results display in the image view.
             if let results = self.results {
                 var displayResults: [((CGPoint, CGPoint, CGPoint, CGPoint), String)] = []
                 for observation in results {
@@ -215,7 +301,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, VisionViewDelegate, NSSearch
                 self.imageView.annotationLayer.results = displayResults
             }
             
-            // Update transcript view.
+            // Update the transcript view.
             if let results = self.results {
                 var transcript: String = ""
                 for observation in results {
@@ -226,6 +312,5 @@ class AppDelegate: NSObject, NSApplicationDelegate, VisionViewDelegate, NSSearch
             }
         }
     }
-
 }
 

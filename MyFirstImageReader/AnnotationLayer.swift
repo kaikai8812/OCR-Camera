@@ -2,7 +2,7 @@
 See LICENSE folder for this sample’s licensing information.
 
 Abstract:
-The layer used for highlighting results.
+A layer subclass that highlights text.
 */
 
 import Cocoa
@@ -27,14 +27,14 @@ class AnnotationLayer: CALayer {
             return
         }
         
-        // Fill opaque overlay.
+        // Fill the clip bounds with an opaque overlay.
         ctx.setFillColor(CGColor.black)
         let clipBounds = ctx.boundingBoxOfClipPath
         ctx.fill(clipBounds)
         
         ctx.saveGState()
         
-        // Highlight result boxes.
+        // Highlight the result boxes.
         ctx.setFillColor(CGColor.white)
         let width = bounds.size.width
         let height = bounds.size.height

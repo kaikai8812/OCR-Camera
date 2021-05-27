@@ -2,7 +2,7 @@
 See LICENSE folder for this sample’s licensing information.
 
 Abstract:
-The custom view that displays progress in the window toolbar and contains the cancel button.
+A custom view that displays progress in the window toolbar and that contains the Cancel button.
 */
 
 import Cocoa
@@ -14,7 +14,7 @@ class ProgressView: NSView {
     override func awakeFromNib() {
         super.awakeFromNib()
         addTrackingArea(NSTrackingArea(rect: NSRect(origin: bounds.origin, size: bounds.size),
-                                       options: [NSTrackingArea.Options.mouseEnteredAndExited, NSTrackingArea.Options.activeInKeyWindow],
+                                       options: [.mouseEnteredAndExited, .activeInKeyWindow],
                                        owner: self,
                                        userInfo: nil))
     }

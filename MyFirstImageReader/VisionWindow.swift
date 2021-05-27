@@ -2,7 +2,7 @@
 See LICENSE folder for this sample’s licensing information.
 
 Abstract:
-The main window.
+The app's main window.
 */
 
 import Cocoa
