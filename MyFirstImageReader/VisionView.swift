@@ -7,6 +7,7 @@ A custom view that renders the OCR results. It supports drag and drop and Contin
 
 import Cocoa
 import Vision
+import UniformTypeIdentifiers
 
 // A delegate protocol to communicates changes to the VisionView.
 protocol VisionViewDelegate: AnyObject {
@@ -123,7 +124,7 @@ class VisionView: NSView, NSServicesMenuRequestor {
     override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
         let pboard = sender.draggingPasteboard
         guard
-            pboard.canReadItem(withDataConformingToTypes: [kUTTypeFileURL as String]),
+            pboard.canReadItem(withDataConformingToTypes: [UniformTypeIdentifiers.UTType.fileURL.identifier]),
             let urls = pboard.readObjects(forClasses: [NSURL.self], options: nil) as? [ NSURL ],
             let firstURL = urls.first
             else { return false }
