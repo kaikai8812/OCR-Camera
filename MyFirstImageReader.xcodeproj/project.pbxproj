@@ -96,7 +96,7 @@
 				D959AB6D74D0ACC30E329F22 /* LICENSE.txt */,
 			);
 			name = LICENSE;
-			path = LICENSE;
+			path = "";
 			sourceTree = "<group>";
 		};
 		B365C13073C33C07BD8DB279 /* Configuration */ = {
@@ -327,6 +327,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				INFOPLIST_FILE = MyFirstImageReader/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -352,6 +353,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				INFOPLIST_FILE = MyFirstImageReader/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
