@@ -61,8 +61,8 @@ struct ImageView: View {
                         .scaledToFit()
                         .overlay {
                             ForEach(imageOCR.observations, id: \.uuid) { observation in
-                                Box(observation: observation)
-                                    .stroke(.red, lineWidth: 1)
+                                SuperBigBox(observation: observation, expansionFactor: 1.3)
+                                    .stroke(.blue, lineWidth: 1)
                             }
                         }
                         .padding()
